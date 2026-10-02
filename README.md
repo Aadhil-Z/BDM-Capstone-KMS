@@ -164,8 +164,8 @@ Given a project title, compare required skills with the skills held by its assig
 ### Prerequisites
 
 - Python 3.10 or newer
-- A PostgreSQL database, such as Supabase
-- A connection string with permission to create the `capstone` schema
+- A PostgreSQL database with the pgvector extension available (such as Supabase)
+- A connection string with permission to create the `capstone` schema and enable the `vector` extension
 
 ### Installation
 
@@ -179,20 +179,41 @@ Given a project title, compare required skills with the skills held by its assig
 3. Install the required packages:
 
    ```bash
-   pip install psycopg2-binary python-dotenv pandas
+   pip install -r requirements.txt
    ```
 
 4. Create `.env` in the repository root:
 
    ```text
    DATABASE_URL=your_supabase_connection_string
+   GROQ_API_KEY=your_groq_api_key
+   GROQ_MODEL=openai/gpt-oss-20b
    ```
 
-5. Run the scripts in numerical order:
+   `GROQ_API_KEY` is optional; enter it in the app when prompted if you prefer not to store it in `.env`.
+   For the latest Groq-supported OpenAI-compatible model, the app defaults to `openai/gpt-oss-20b`.
+
+5. Create the relational schema and sample data:
 
    ```bash
    python 00_create_schema.py
    python 01_seed_data.py
+   ```
+
+6. Start the teaching app:
+
+   ```bash
+   streamlit run app.py
+   ```
+
+   In **Build embeddings**, create the pgvector index from the seeded people and projects. The app downloads and runs the
+   lightweight `sentence-transformers/all-MiniLM-L6-v2` embedding model locally on first use. In **Ask the knowledge graph**,
+   ask a business question to see vector matches and the connected relational evidence. Without a Groq key, retrieval still
+   works and the app clearly indicates that LLM answer generation is not enabled.
+
+7. The original SQL teaching scripts can be run after seeding:
+
+   ```bash
    python 02_explore_tables.py
    python 03_aggregates.py
    python 04_where_filters.py
@@ -202,6 +223,14 @@ Given a project title, compare required skills with the skills held by its assig
    ```
 
 `00_create_schema.py` drops and recreates the `capstone` schema, so use it only when a clean reset is intended. Run the seed script again only after the schema has been recreated.
+
+The Streamlit app creates `capstone.knowledge_embedding` and its cosine-search index when embeddings are built. The table stores
+derived person/project text, model name, and 384-dimensional vectors; it does not modify the original seven business tables.
+The app's graph expansion uses SQL joins over those existing tables, so no separate graph database is required. The walkthrough
+compares standard RAG with this relational Graph RAG, and displays a live retrieval graph for each question showing vector matches
+and the records reached through relational expansion. Its embedding-space view uses PCA to project the indexed person/project
+vectors into two dimensions, highlights the latest retrieved records, and overlays assignment and collaboration edges from
+PostgreSQL; the plotted distances are a visualization, not a replacement for those real relationships.
 
 ## Script Reference
 
@@ -215,6 +244,8 @@ Given a project title, compare required skills with the skills held by its assig
 | `05_joins.py` | Connect the system's core entities. | INNER JOIN, table aliases, DataFrames |
 | `06_candidate_finder.py` | Rank candidates and identify skill gaps. | Ordering, multi-table joins, subqueries |
 | `07_analytics.py` | Produce deeper organizational insights. | HAVING, UNION ALL, subqueries, coverage ratios |
+| `app.py` | Visualize the ERD, compare standard RAG with Graph RAG, and explore PCA/relational retrieval graphs. | Streamlit, Altair, NumPy PCA, RAG, pgvector, optional Groq |
+| `rag_backend.py` | Build embeddings, search vectors, and expand relational relationships. | MiniLM, pgvector cosine search, relational graph traversal |
 
 ## Data And Security Notes
 
@@ -238,6 +269,9 @@ Given a project title, compare required skills with the skills held by its assig
 |-- 05_joins.py
 |-- 06_candidate_finder.py
 |-- 07_analytics.py
+|-- app.py
+|-- rag_backend.py
+|-- requirements.txt
 |-- CODE_OF_CONDUCT.md
 |-- LICENSE
 `-- README.md
@@ -250,6 +284,10 @@ Given a project title, compare required skills with the skills held by its assig
 - **Supabase** for hosted PostgreSQL infrastructure
 - **psycopg2** for database connectivity
 - **pandas** for readable multi-row result sets and descriptive statistics
+- **Streamlit** for the interactive ERD and Graph RAG walkthrough
+- **FastEmbed / all-MiniLM-L6-v2** for local, lightweight sentence embeddings
+- **pgvector** for storing and searching embeddings in PostgreSQL
+- **Groq** for optional LLM answer generation
 
 ## License
 

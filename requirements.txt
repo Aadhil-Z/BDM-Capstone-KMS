@@ -1,0 +1,9 @@
+fastembed
+groq
+altair
+numpy
+pandas
+pgvector
+psycopg2-binary
+python-dotenv
+streamlit

@@ -182,7 +182,7 @@ Given a project title, compare required skills with the skills held by its assig
    pip install -r requirements.txt
    ```
 
-4. Create `.env` in the repository root:
+4. Create a local `.env` file in the repository root (the app loads it automatically):
 
    ```text
    DATABASE_URL=your_supabase_connection_string
@@ -190,8 +190,10 @@ Given a project title, compare required skills with the skills held by its assig
    GROQ_MODEL=openai/gpt-oss-20b
    ```
 
-   `GROQ_API_KEY` is optional; enter it in the app when prompted if you prefer not to store it in `.env`.
-   For the latest Groq-supported OpenAI-compatible model, the app defaults to `openai/gpt-oss-20b`.
+   Replace the placeholders with your own credentials on your machine. `GROQ_API_KEY` is optional; without it, retrieval
+   still works and the app skips LLM answer generation. You can also enter the key in the app for the current session.
+   Never commit or upload `.env`, paste API keys into this README, or share them in source control. `.env` is ignored by Git.
+   The app defaults to the `openai/gpt-oss-20b` model; set `GROQ_MODEL` to override it.
 
 5. Create the relational schema and sample data:
 

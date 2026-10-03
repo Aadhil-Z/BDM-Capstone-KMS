@@ -87,16 +87,17 @@ interactions = [
 ]
 
 insertions = [
-    ("person", "INSERT INTO capstone.person (name, email, department, role, joined_date) VALUES (%s, %s, %s, %s, %s)", people),
-    ("skill", "INSERT INTO capstone.skill (name, category, domain) VALUES (%s, %s, %s)", skills),
-    ("project", "INSERT INTO capstone.project (title, domain, start_date, end_date, outcome, client_type) VALUES (%s, %s, %s, %s, %s, %s)", projects),
-    ("person_skill", "INSERT INTO capstone.person_skill (person_id, skill_id, proficiency, last_used_date, endorsement_count) VALUES (%s, %s, %s, %s, %s)", person_skills),
-    ("assignment", "INSERT INTO capstone.assignment (person_id, project_id, role_played, from_date, to_date) VALUES (%s, %s, %s, %s, %s)", assignments),
-    ("project_skill", "INSERT INTO capstone.project_skill (project_id, skill_id, importance) VALUES (%s, %s, %s)", project_skills),
-    ("interaction", "INSERT INTO capstone.interaction (person_a, person_b, project_id, channel, frequency, last_contact) VALUES (%s, %s, %s, %s, %s, %s)", interactions),
+    ("person", "-- Insert employee identity and organizational attributes.\nINSERT INTO capstone.person (name, email, department, role, joined_date) VALUES (%s, %s, %s, %s, %s)", people),
+    ("skill", "-- Insert canonical skill definitions.\nINSERT INTO capstone.skill (name, category, domain) VALUES (%s, %s, %s)", skills),
+    ("project", "-- Insert project metadata and lifecycle dates.\nINSERT INTO capstone.project (title, domain, start_date, end_date, outcome, client_type) VALUES (%s, %s, %s, %s, %s, %s)", projects),
+    ("person_skill", "-- Link employees to skills with proficiency and usage signals.\nINSERT INTO capstone.person_skill (person_id, skill_id, proficiency, last_used_date, endorsement_count) VALUES (%s, %s, %s, %s, %s)", person_skills),
+    ("assignment", "-- Record employee roles and dates on projects.\nINSERT INTO capstone.assignment (person_id, project_id, role_played, from_date, to_date) VALUES (%s, %s, %s, %s, %s)", assignments),
+    ("project_skill", "-- Link project requirements to catalog skills.\nINSERT INTO capstone.project_skill (project_id, skill_id, importance) VALUES (%s, %s, %s)", project_skills),
+    ("interaction", "-- Insert collaboration counts and contact metadata between employees.\nINSERT INTO capstone.interaction (person_a, person_b, project_id, channel, frequency, last_contact) VALUES (%s, %s, %s, %s, %s, %s)", interactions),
 ]
 
 for table_name, statement, rows in insertions:
+    # Insert parameterized seed rows into the named business table.
     cursor.executemany(statement, rows)
     print(f"{table_name}: {len(rows)} rows seeded.")
 

@@ -21,19 +21,23 @@ print("=" * 60)
 
 queries = [
     ("People per department", """
+        -- Count people in each department.
         SELECT department, COUNT(*) AS headcount
         FROM capstone.person GROUP BY department ORDER BY headcount DESC
     """),
     ("Average proficiency by skill category", """
+        -- Average recorded proficiency for each skill category.
         SELECT s.category, ROUND(AVG(ps.proficiency), 2) AS average_proficiency
         FROM capstone.person_skill ps JOIN capstone.skill s ON ps.skill_id = s.skill_id
         GROUP BY s.category ORDER BY s.category
     """),
     ("Interaction frequency by channel", """
+        -- Summarize total and average interaction frequency by channel.
         SELECT channel, SUM(frequency) AS total_frequency, ROUND(AVG(frequency), 2) AS average_frequency
         FROM capstone.interaction GROUP BY channel ORDER BY total_frequency DESC
     """),
     ("Projects by outcome", """
+        -- Count projects grouped by their recorded outcome.
         SELECT outcome, COUNT(*) AS project_count
         FROM capstone.project GROUP BY outcome ORDER BY project_count DESC
     """),
@@ -41,10 +45,12 @@ queries = [
 
 for title, query in queries:
     print(f"\n{title}")
+    # Run the aggregate query for the metric named above it.
     cursor.execute(query)
     for row in cursor.fetchall():
         print(row)
 
+# Re-run the department headcount query to build a DataFrame for follow-up analysis.
 cursor.execute(queries[0][1])
 rows = cursor.fetchall()
 columns = [description[0] for description in cursor.description]

@@ -30,6 +30,7 @@ def embedding_model():
 def _fetch_documents(connection):
     documents = []
     with connection.cursor() as cursor:
+        # Build one text document per person, including skills and project roles.
         cursor.execute(
             """
             SELECT p.person_id, p.name, p.department, p.role,
@@ -59,6 +60,7 @@ def _fetch_documents(connection):
         )
         people = cursor.fetchall()
 
+        # Build one text document per project, including requirements and team members.
         cursor.execute(
             """
             SELECT proj.project_id, proj.title, proj.domain, proj.outcome,
@@ -131,9 +133,12 @@ def rebuild_embeddings():
 
     with closing(psycopg2.connect(database_url())) as connection, connection:
         with connection.cursor() as cursor:
+            # Ensure PostgreSQL has pgvector available before creating vector columns.
             cursor.execute("CREATE EXTENSION IF NOT EXISTS vector")
             register_vector(connection)
+            # Ensure the namespace exists before creating the derived embedding store.
             cursor.execute("CREATE SCHEMA IF NOT EXISTS capstone")
+            # Create one derived vector row per person or project.
             cursor.execute(
                 f"""
                 CREATE TABLE IF NOT EXISTS capstone.knowledge_embedding (
@@ -148,6 +153,7 @@ def rebuild_embeddings():
                 )
                 """
             )
+            # Index vectors for approximate cosine-similarity retrieval.
             cursor.execute(
                 """
                 CREATE INDEX IF NOT EXISTS knowledge_embedding_cosine_idx
@@ -155,7 +161,9 @@ def rebuild_embeddings():
                 USING hnsw (embedding vector_cosine_ops)
                 """
             )
+            # Replace the stale derived index in the same transaction.
             cursor.execute("DELETE FROM capstone.knowledge_embedding")
+            # Insert the complete rebuilt document/vector set.
             execute_values(
                 cursor,
                 """
@@ -171,9 +179,11 @@ def rebuild_embeddings():
 def embedding_status():
     with closing(psycopg2.connect(database_url())) as connection, connection:
         with connection.cursor() as cursor:
+            # Check whether the optional vector table has been created yet.
             cursor.execute("SELECT to_regclass('capstone.knowledge_embedding')")
             if cursor.fetchone()[0] is None:
                 return {"total": 0, "by_model": []}
+            # Summarize stored vectors by embedding model for the app status panel.
             cursor.execute(
                 """
                 SELECT COUNT(*), COALESCE(
@@ -197,10 +207,12 @@ def embedding_graph_data():
     with closing(psycopg2.connect(database_url())) as connection, connection:
         register_vector(connection)
         with connection.cursor() as cursor:
+            # Return an empty graph when embeddings have not yet been built.
             cursor.execute("SELECT to_regclass('capstone.knowledge_embedding')")
             if cursor.fetchone()[0] is None:
                 return {"nodes": [], "edges": []}
 
+            # Load current-model vectors joined to the readable people/project labels.
             cursor.execute(
                 """
                 SELECT ke.source_type, ke.source_id,
@@ -238,6 +250,7 @@ def embedding_graph_data():
                 for node in nodes
             }
 
+            # Build person-to-project edges from recorded assignments.
             cursor.execute(
                 """
                 SELECT p.person_id, proj.project_id,
@@ -261,6 +274,7 @@ def embedding_graph_data():
                 and ("project", project_id) in node_keys
             ]
 
+            # Aggregate symmetric collaboration links and their recorded metadata.
             cursor.execute(
                 """
                 SELECT LEAST(person_a, person_b), GREATEST(person_a, person_b),
@@ -293,6 +307,7 @@ def embedding_graph_data():
 
 
 def _person_graph_context(cursor, person_id):
+    # Expand a person node into skills, project assignments, and collaborators.
     cursor.execute(
         """
         SELECT p.name, p.department, p.role,
@@ -340,6 +355,7 @@ def _person_graph_context(cursor, person_id):
 
 
 def _project_graph_context(cursor, project_id):
+    # Expand a project node into required skills, assigned team members, and interactions.
     cursor.execute(
         """
         SELECT proj.title, proj.domain,
@@ -400,6 +416,7 @@ def retrieve(question, limit=5):
     with closing(psycopg2.connect(database_url())) as connection, connection:
         register_vector(connection)
         with connection.cursor() as cursor:
+            # Retrieve the nearest indexed records using cosine distance to the question vector.
             cursor.execute(
                 """
                 SELECT source_type, source_id, content,

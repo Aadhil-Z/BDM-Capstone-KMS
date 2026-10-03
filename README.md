@@ -213,7 +213,20 @@ Given a project title, compare required skills with the skills held by its assig
    ask a business question to see vector matches and the connected relational evidence. Without a Groq key, retrieval still
    works and the app clearly indicates that LLM answer generation is not enabled.
 
-7. The original SQL teaching scripts can be run after seeding:
+7. Start the database dashboard to browse and manage normalized KMS records:
+
+   ```bash
+   streamlit run dashboard_kms.py
+   ```
+
+   The dashboard is organized around an employee directory and individual profiles (service period, proficiency-rated skills,
+   endorsements, project history, and collaborators), plus readable project profiles with team and required-skill coverage.
+   Its **Insights** page explains the CTEs and assumptions behind candidate, collaborator, and skill-coverage measures; the
+   application queries the normalized tables directly and does not create a star schema or persisted reporting tables.
+   **Data management** keeps direct create/edit/delete access to all seven normalized tables in one advanced page, displaying
+   names instead of foreign-key IDs. Deletes are permanent and PostgreSQL blocks deletion of referenced records.
+
+8. The original SQL teaching scripts can be run after seeding:
 
    ```bash
    python 02_explore_tables.py
@@ -247,6 +260,7 @@ PostgreSQL; the plotted distances are a visualization, not a replacement for tho
 | `06_candidate_finder.py` | Rank candidates and identify skill gaps. | Ordering, multi-table joins, subqueries |
 | `07_analytics.py` | Produce deeper organizational insights. | HAVING, UNION ALL, subqueries, coverage ratios |
 | `app.py` | Visualize the ERD, compare standard RAG with Graph RAG, and explore PCA/relational retrieval graphs. | Streamlit, Altair, NumPy PCA, RAG, pgvector, optional Groq |
+| `dashboard_kms.py` | Explore person and project profiles, explain insight calculations, and maintain source records. | Streamlit, joined SQL/CTEs, CRUD, pandas, charts |
 | `rag_backend.py` | Build embeddings, search vectors, and expand relational relationships. | MiniLM, pgvector cosine search, relational graph traversal |
 
 ## Data And Security Notes
@@ -272,6 +286,7 @@ PostgreSQL; the plotted distances are a visualization, not a replacement for tho
 |-- 06_candidate_finder.py
 |-- 07_analytics.py
 |-- app.py
+|-- dashboard_kms.py
 |-- rag_backend.py
 |-- requirements.txt
 |-- CODE_OF_CONDUCT.md
@@ -286,7 +301,7 @@ PostgreSQL; the plotted distances are a visualization, not a replacement for tho
 - **Supabase** for hosted PostgreSQL infrastructure
 - **psycopg2** for database connectivity
 - **pandas** for readable multi-row result sets and descriptive statistics
-- **Streamlit** for the interactive ERD and Graph RAG walkthrough
+- **Streamlit** for the interactive ERD, Graph RAG walkthrough, and KMS dashboard
 - **FastEmbed / all-MiniLM-L6-v2** for local, lightweight sentence embeddings
 - **pgvector** for storing and searching embeddings in PostgreSQL
 - **Groq** for optional LLM answer generation

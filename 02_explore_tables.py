@@ -20,23 +20,34 @@ print("EXPLORING CAPSTONE TABLES")
 print("=" * 60)
 
 table_count_queries = {
-    "person": """SELECT COUNT(*) FROM capstone.person""",
-    "skill": """SELECT COUNT(*) FROM capstone.skill""",
-    "project": """SELECT COUNT(*) FROM capstone.project""",
-    "person_skill": """SELECT COUNT(*) FROM capstone.person_skill""",
-    "assignment": """SELECT COUNT(*) FROM capstone.assignment""",
-    "project_skill": """SELECT COUNT(*) FROM capstone.project_skill""",
-    "interaction": """SELECT COUNT(*) FROM capstone.interaction""",
+    "person": """-- Count employee records.
+        SELECT COUNT(*) FROM capstone.person""",
+    "skill": """-- Count canonical skills.
+        SELECT COUNT(*) FROM capstone.skill""",
+    "project": """-- Count project records.
+        SELECT COUNT(*) FROM capstone.project""",
+    "person_skill": """-- Count person-to-skill relationships.
+        SELECT COUNT(*) FROM capstone.person_skill""",
+    "assignment": """-- Count person-to-project assignments.
+        SELECT COUNT(*) FROM capstone.assignment""",
+    "project_skill": """-- Count project-to-skill relationships.
+        SELECT COUNT(*) FROM capstone.project_skill""",
+    "interaction": """-- Count collaboration records.
+        SELECT COUNT(*) FROM capstone.interaction""",
 }
 for table, query in table_count_queries.items():
+    # Count rows in each core entity and relationship table.
     cursor.execute(query)
     print(f"{table}: {cursor.fetchone()[0]} rows")
 
 for table in ["person", "skill"]:
     sample_query = {
-        "person": """SELECT * FROM capstone.person LIMIT 5""",
-        "skill": """SELECT * FROM capstone.skill LIMIT 5""",
+        "person": """-- Preview at most five employee records.
+            SELECT * FROM capstone.person LIMIT 5""",
+        "skill": """-- Preview at most five skill definitions.
+            SELECT * FROM capstone.skill LIMIT 5""",
     }[table]
+    # Preview a small sample to inspect columns and representative values.
     cursor.execute(sample_query)
     rows = cursor.fetchall()
     columns = [description[0] for description in cursor.description]
@@ -45,9 +56,17 @@ for table in ["person", "skill"]:
     print(frame)
     print(frame.dtypes)
 
-cursor.execute("SELECT DISTINCT category FROM capstone.skill ORDER BY category")
+# List distinct skill categories to inspect the available reference values.
+cursor.execute(
+    "-- List each distinct skill category in sorted order.\n"
+    "SELECT DISTINCT category FROM capstone.skill ORDER BY category"
+)
 print(f"\nSkill categories: {[row[0] for row in cursor.fetchall()]}")
-cursor.execute("SELECT DISTINCT client_type FROM capstone.project ORDER BY client_type")
+# List distinct project client types for the same reference-data check.
+cursor.execute(
+    "-- List each distinct project client type in sorted order.\n"
+    "SELECT DISTINCT client_type FROM capstone.project ORDER BY client_type"
+)
 print(f"Project client types: {[row[0] for row in cursor.fetchall()]}")
 
 cursor.close()

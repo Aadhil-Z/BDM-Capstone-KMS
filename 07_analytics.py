@@ -20,6 +20,7 @@ print("DEEPER ANALYTICS")
 print("=" * 60)
 
 query_1 = """
+    -- Sum interaction frequency for each person across both participant columns.
     SELECT p.name, SUM(i.frequency) AS total_frequency
     FROM capstone.person p
     JOIN (
@@ -30,6 +31,7 @@ query_1 = """
     GROUP BY p.name ORDER BY total_frequency DESC
 """
 print("\nTop collaborators")
+# Rank people by the interaction frequency attributed to their participation.
 cursor.execute(query_1)
 rows = cursor.fetchall()
 columns = [description[0] for description in cursor.description]
@@ -41,6 +43,7 @@ print(collaborator_frame["total_frequency"].describe())
 
 analytics_queries = [
     ("Skill versatility", """
+        -- Find people whose skills span more than two distinct categories.
         SELECT p.name, COUNT(DISTINCT s.category) AS category_count
         FROM capstone.person p JOIN capstone.person_skill ps ON p.person_id = ps.person_id
         JOIN capstone.skill s ON ps.skill_id = s.skill_id
@@ -48,6 +51,7 @@ analytics_queries = [
         ORDER BY category_count DESC, p.name
     """),
     ("Underutilized talent", """
+        -- Find highly proficient strongest skills that have not been used in a year.
         SELECT p.name, s.name AS highest_skill, ps.proficiency, ps.last_used_date
         FROM capstone.person p JOIN capstone.person_skill ps ON p.person_id = ps.person_id
         JOIN capstone.skill s ON ps.skill_id = s.skill_id
@@ -56,6 +60,7 @@ analytics_queries = [
         ORDER BY ps.last_used_date
     """),
     ("Project required-skill coverage", """
+        -- Compare each project's required skills with skills held by assigned people.
         SELECT proj.title,
                COUNT(DISTINCT covered.skill_id) AS covered_required,
                COUNT(DISTINCT required.skill_id) AS total_required,
@@ -70,6 +75,7 @@ analytics_queries = [
 
 for title, query in analytics_queries:
     print(f"\n{title}")
+    # Run the named analytical query: versatility, stale talent, or skill coverage.
     cursor.execute(query)
     for row in cursor.fetchall():
         print(row)

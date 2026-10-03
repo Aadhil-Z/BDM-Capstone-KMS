@@ -226,6 +226,37 @@ Given a project title, compare required skills with the skills held by its assig
    **Data management** keeps direct create/edit/delete access to all seven normalized tables in one advanced page, displaying
    names instead of foreign-key IDs. Deletes are permanent and PostgreSQL blocks deletion of referenced records.
 
+### KMS Dashboard Guide
+
+The dashboard connects directly to the same `DATABASE_URL` as the SQL scripts and reads the existing `capstone` schema.
+It does not require embeddings or Groq. Run the schema and seed scripts first if the database is empty.
+
+- **Overview** summarizes people, projects, skills, assignments, department headcount, project outcomes, and widely held skills.
+- **People** provides a searchable directory with department and join-date filters. Open a profile to see service duration,
+  recorded skills and 1–5 proficiency ratings, endorsement counts, last-used dates, project assignments, and collaborators.
+  Average proficiency is the arithmetic mean of the employee's recorded skill ratings; it is not weighted by endorsements.
+- **Projects** supports search across project text, team members, and required skills, with an optional project-start-date range.
+  Project profiles show named team members and project-by-project required-skill coverage.
+- **Insights** includes potential underutilization signals, top collaborators, and required-skill coverage. Expand the
+  calculation details to review the CTE approach, formulas, and caveats before interpreting the results.
+- **Data management** is the advanced maintenance area for all seven normalized tables. Browse views show names and joined
+  labels rather than foreign-key IDs. Create, edit, and delete forms use database constraints; deletes are permanent and can
+  be blocked when another row references the record.
+
+#### How to Interpret the Insights
+
+The dashboard queries the normalized tables directly. CTEs (`WITH` clauses) create temporary intermediate results for each
+query; they are not persisted reporting tables. The current implementation does not create a star schema or data warehouse.
+
+- **Potentially underutilized candidates** is a review heuristic: a person has a proficiency rating of at least 4/5 for a skill
+  not used within the selected window (or without a last-used date), and has no assignment considered active/recent in that
+  window. It does not measure workload, availability, or actual utilization.
+- **Top collaborators** sums interaction frequency for both participants on interaction records with recent `last_contact`
+  dates. It ranks recorded database metadata, not independently verified meetings or messages.
+- **Project skill coverage** counts a required skill as covered if at least one assigned person has that skill in
+  `person_skill`. Coverage is covered requirements divided by all required skills. It does not apply a proficiency threshold
+  or check recency; projects without required skills are marked not applicable.
+
 8. The original SQL teaching scripts can be run after seeding:
 
    ```bash
